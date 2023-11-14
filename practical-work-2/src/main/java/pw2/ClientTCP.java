@@ -10,7 +10,7 @@ class ClientTCP {
   private static final String HOST = "localhost";
   private static final int PORT = 1234;
   private static final int CLIENT_ID = (int) (Math.random() * 1000000);
-  private static final String TEXTUAL_DATA = "👋 from Client " + CLIENT_ID;
+  private static final String TEXTUAL_DATA = "[#" + CLIENT_ID + "] Hello";
 
   public static void main(String args[]) {
     System.out.println("Connecting to the chat room via " + HOST + ":" + PORT);
@@ -27,7 +27,10 @@ class ClientTCP {
       out.write(TEXTUAL_DATA + "\n");
       out.flush();
 
-      System.out.println("You have left the chatroom.");
+      User user = new User();
+      Thread threadUser = new Thread(user);
+
+      System.out.println("\nYou have left the chatroom.");
     }
     catch (IOException e) {
       System.out.println("[Client " + CLIENT_ID + "] exception: " + e);
