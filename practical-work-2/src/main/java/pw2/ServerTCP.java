@@ -8,9 +8,10 @@ import java.nio.charset.StandardCharsets;
 public class ServerTCP {
     private static final int PORT = 1234;
     private static final int SERVER_ID = (int) (Math.random() * 1000000);
-    private static final String TEXTUAL_DATA = "Hello Calvin(s) " + SERVER_ID;
+    public static String FILE_PATH = "pw2/history.txt"; //la mettre en const
 
     public static void main(String[] args) {
+
         try (ServerSocket serverSocket = new ServerSocket(PORT);) {
             System.out.println(
                     "[Server " + SERVER_ID + "] starting with id " + SERVER_ID
@@ -52,41 +53,49 @@ public class ServerTCP {
                     )
             ) {
                 System.out.println(
-                        "[Server " +
-                                SERVER_ID +
-                                "] new client connected from " +
-                                socket.getInetAddress().getHostAddress() +
-                                ":" +
-                                socket.getPort()
+                        "[Server " + SERVER_ID + "] new client connected from " + socket.getInetAddress().getHostAddress() + ":" + socket.getPort()
                 );
 
-                System.out.println(
-                        "[Server " +
-                                SERVER_ID +
-                                "] received textual data from client: " +
-                                in.readLine()
-                );
 
+                // Send the last written line from the history
+                String lastLine = "";
+
+                BufferedReader br = null;
                 try {
-                    System.out.println(
-                            "[Server " +
-                                    SERVER_ID +
-                                    "] sleeping for 10 seconds to simulate a long operation"
-                    );
-                    Thread.sleep(10000);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
+                    String sCurrentLine;
+
+                    br = new BufferedReader(new FileReader(FILE_PATH));
+
+                    while ((sCurrentLine = br.readLine()) != null) {
+                        lastLine = sCurrentLine;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    try {
+                        if (br != null) br.close();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+                out.write(lastLine + "\n"); // sert a envoyer lastline au client
+                out.flush();
+
+
+
+                // Write the user input into the history file
+                String userInput = in.readLine();
+
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter("D:\\S3\\DAI\\practical-2\\practical-work-2\\src\\main\\java\\pw2\\history.txt", true))) {
+                    writer.write(userInput + "\n"); // systems differents, pas \n
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
 
                 System.out.println(
-                        "[Server " +
-                                SERVER_ID +
-                                "] sending response to client: " +
-                                TEXTUAL_DATA
+                        "[Server " + SERVER_ID + "] received textual data from client: " + userInput
                 );
 
-                out.write(TEXTUAL_DATA + "\n");
-                out.flush();
 
                 System.out.println("[Server " + SERVER_ID + "] closing connection");
             } catch (IOException e) {
