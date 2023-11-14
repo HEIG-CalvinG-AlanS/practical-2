@@ -3,6 +3,7 @@ package pw2;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.util.Scanner;
 
 class ClientTCP {
 
@@ -12,45 +13,23 @@ class ClientTCP {
   private static final String TEXTUAL_DATA = "👋 from Client " + CLIENT_ID;
 
   public static void main(String args[]) {
-    System.out.println(
-      "[Client " + CLIENT_ID + "] starting with id " + CLIENT_ID
-    );
-    System.out.println(
-      "[Client " + CLIENT_ID + "] connecting to " + HOST + ":" + PORT
-    );
+    System.out.println("Connecting to the chat room via " + HOST + ":" + PORT);
 
     try (
       Socket socket = new Socket(HOST, PORT);
-      BufferedReader in = new BufferedReader(
-        new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8)
-      );
-      BufferedWriter out = new BufferedWriter(
-        new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8)
-      );
-    ) {
-      System.out.println(
-        "[Client " + CLIENT_ID + "] connected to " + HOST + ":" + PORT
-      );
-      System.out.println(
-        "[Client " +
-        CLIENT_ID +
-        "] sending textual data to server " +
-        HOST +
-        ":" +
-        PORT +
-        ": " +
-        TEXTUAL_DATA
-      );
+      BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8)); //Inutilisé pour le moment
+      BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
+    )
+    {
+      System.out.println("Successful connection");
+      System.out.println("Your personnal ID is : " + CLIENT_ID);
 
       out.write(TEXTUAL_DATA + "\n");
       out.flush();
 
-      System.out.println(
-        "[Client " + CLIENT_ID + "] response from server: " + in.readLine()
-      );
-
-      System.out.println("[Client " + CLIENT_ID + "] closing connection");
-    } catch (IOException e) {
+      System.out.println("You have left the chatroom.");
+    }
+    catch (IOException e) {
       System.out.println("[Client " + CLIENT_ID + "] exception: " + e);
     }
   }
