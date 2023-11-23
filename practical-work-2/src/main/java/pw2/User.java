@@ -1,12 +1,19 @@
 package pw2;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.Scanner;
 
 public class User implements Runnable {
     private String username;
     private final Scanner message;
+    private final int ID;
+    BufferedWriter out;
 
-    User() {
+    User(BufferedWriter out, int id) {
+        this.out = out;
+        this.ID = id;
+
         message = new Scanner(System.in);
         username = "";
         changeUsername();
@@ -35,6 +42,14 @@ public class User implements Runnable {
                     System.out.println("\n\t/online : See all connected people");
                     System.out.println("\n\t/quit : Quit the chat room\n");
                     break;
+                default:
+                    try {
+                       // System.out.println("Message : " + msg);
+                        out.write("[#" + ID + "] " + msg + "\n");
+                        out.flush();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
             }
         }
     }
