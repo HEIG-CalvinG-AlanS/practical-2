@@ -43,6 +43,7 @@ public class ServerTCP {
                 Thread clientThread = new Thread(clientHandler);
                 clientThread.start();
             }
+
         } catch (IOException e) {
             System.out.println("[Server " + SERVER_ID + "] exception: " + e);
         }
@@ -103,23 +104,23 @@ public class ServerTCP {
                 out.write(lastLine + "\n"); // sert a envoyer lastline au client
                 out.flush();
 
-                // Write the user input into the history file
-                String userInput = in.readLine();
+                String userInput = "";
 
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
-                    writer.write(userInput + "\n"); // systems differents, pas \n
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                while(userInput != null) {
+                    // Write the user input into the history file
+                    userInput = in.readLine();
 
-                System.out.println(
-                        "[Server " + SERVER_ID + "] received textual data from client: " + userInput
-                );
-
-                System.out.println("[Server " + SERVER_ID + "] closing connection");
+                    try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
+                        if(userInput != null && userInput.charAt(5) != '/') writer.write(userInput + "\n"); // systems differents, pas \n
+                        writer.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                  
             } catch (IOException e) {
                 System.out.println("[Server " + SERVER_ID + "] exception: " + e);
             }
+            System.out.println("[Server " + SERVER_ID + "] closing connection");
         }
     }
 }
