@@ -25,6 +25,7 @@ public class ServerTCP {
                 Thread clientThread = new Thread(new ClientHandler(clientSocket));
                 clientThread.start();
             }
+
         } catch (IOException e) {
             System.out.println("[Server " + SERVER_ID + "] exception: " + e);
         }
@@ -82,25 +83,28 @@ public class ServerTCP {
                 out.flush();
 
 
+                String userInput = "";
 
-                // Write the user input into the history file
-                String userInput = in.readLine();
+                while(userInput != null) {
+                    // Write the user input into the history file
+                    userInput = in.readLine();
 
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter("D:\\S3\\DAI\\practical-2\\practical-work-2\\src\\main\\java\\pw2\\history.txt", true))) {
-                    writer.write(userInput + "\n"); // systems differents, pas \n
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
+                        if(userInput != null && userInput.charAt(5) != '/') writer.write(userInput + "\n"); // systems differents, pas \n
+                        writer.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    System.out.println(
+                            "[Server " + SERVER_ID + "] received textual data from client: " + userInput
+                    );
                 }
 
-                System.out.println(
-                        "[Server " + SERVER_ID + "] received textual data from client: " + userInput
-                );
-
-
-                System.out.println("[Server " + SERVER_ID + "] closing connection");
             } catch (IOException e) {
                 System.out.println("[Server " + SERVER_ID + "] exception: " + e);
             }
+            System.out.println("[Server " + SERVER_ID + "] closing connection");
         }
     }
 }
