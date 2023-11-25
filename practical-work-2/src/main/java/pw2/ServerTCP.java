@@ -9,10 +9,32 @@ import java.util.List; // peut etre maven dependency????
 
 public class ServerTCP {
     private static final int PORT = 1234;
-    private static final int SERVER_ID = (int) (Math.random() * 1000000);
+    private static final int SERVER_ID = (int) (Math.random() * 1000000);    // si port fixe, id sert a rien
     public static String FILE_PATH = "pw2/history.txt"; //la mettre en const
-    public static int CHATROOM_SIZE = 1;
-    private static List<ClientHandler> onlineUsers;
+    public static int CHATROOM_SIZE = 3;
+    private static ArrayList<ClientHandler> onlineUsers;
+
+    public static int firstAvailableID(ArrayList<ClientHandler> array) {
+        int lowestCandidate = 0;
+
+        for (int i = 0; i < CHATROOM_SIZE; i++) {
+            boolean used = false;
+
+            for (ClientHandler c : array) {
+                if (c.getID() == i) {
+                    used = true;
+                    break;
+                }
+            }
+
+            if (!used) {
+                lowestCandidate = i;
+                break;
+            }
+        }
+
+        return lowestCandidate;
+    }
 
     public static void main(String[] args) {
 
@@ -30,14 +52,15 @@ public class ServerTCP {
             while (true) {
                 try {
                     Socket clientSocket = serverSocket.accept();
+                    PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
                     if (onlineUsers.size() < CHATROOM_SIZE) {
                         ClientHandler clientHandler = new ClientHandler(clientSocket);
-                        System.out.println(onlineUsers.size() + " " + CHATROOM_SIZE);
                         onlineUsers.add(clientHandler);
+                        clientHandler.setID(firstAvailableID(onlineUsers));
+                        out.println(clientHandler.getID());//Send the new client his ID
                         Thread clientThread = new Thread(clientHandler);
                         clientThread.start();
                     } else {
-                        PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
                         out.println("Sorry, the chatroom is full!");
                         clientSocket.close();
                         System.out.println("Connection attempt from client refused: chatroom is full.");
@@ -46,6 +69,7 @@ public class ServerTCP {
                     e.printStackTrace();
                 }
             }
+
         } catch (IOException e) {
             System.out.println("[Server " + SERVER_ID + "] exception: " + e);
         }
@@ -54,9 +78,18 @@ public class ServerTCP {
     static class ClientHandler implements Runnable {
 
         private final Socket socket;
+        private int clientID;
 
         public ClientHandler(Socket socket) {
             this.socket = socket;
+        }
+
+        public int getID() {
+            return clientID;
+        }
+
+        public void setID(int i) {
+            clientID = i;
         }
 
         @Override
