@@ -25,11 +25,20 @@ public class ServerTCP {
         return -1;
     }
 
+    public static void emptyHistory() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, false))) {
+           System.out.println(SERVER_MESSAGE + "History reseted");
+        } catch (IOException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+
     public static void main(String[] args) {
 
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println(SERVER_MESSAGE + "starting with id " + SERVER_ID);
             System.out.println(SERVER_MESSAGE + "listening on port " + PORT);
+            emptyHistory();
 
             while (true) {
                 try {
@@ -54,7 +63,7 @@ public class ServerTCP {
             }
 
         } catch (IOException e) {
-            System.out.println(SERVER_MESSAGE +  "exception: " + e);
+            System.out.println(SERVER_MESSAGE + "exception: " + e);
         }
     }
 
