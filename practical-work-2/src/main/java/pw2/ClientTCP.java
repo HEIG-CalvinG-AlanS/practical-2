@@ -3,15 +3,13 @@ package pw2;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
-import java.util.Scanner;
 
 class ClientTCP {
 
     private static final String HOST = "localhost";
     private static final int PORT = 1234;
-    private static final int CLIENT_ID = 0;
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         System.out.println("Connecting to the chat room via " + HOST + ":" + PORT);
         try {
             Socket socket = new Socket(HOST, PORT);
@@ -20,10 +18,14 @@ class ClientTCP {
 
             String serverResponse = in.readLine(); // Read the response from the server
 
-            if (serverResponse != null && serverResponse.equals("Sorry, the chatroom is full!")) {
+            int CLIENT_ID;
+            if (serverResponse.equals("Sorry, the chatroom is full!")) {
                 System.out.println(serverResponse);
                 socket.close();
                 return;
+            }
+            else{
+                CLIENT_ID = Integer.parseInt(serverResponse);
             }
 
             System.out.println("Successful connection");
