@@ -31,7 +31,7 @@ class ClientTCP {
             System.out.println("Successful connection");
             System.out.println("Your personal ID is : " + CLIENT_ID);
 
-            User user = new User(out, CLIENT_ID, in);
+            User user = new User(out, CLIENT_ID);
 
             Thread threadUser = new Thread(user);
 
