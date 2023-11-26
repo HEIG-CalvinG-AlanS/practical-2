@@ -8,7 +8,6 @@ class ClientTCP {
 
     private static final String HOST = "localhost";
     private static final int PORT = 1234;
-    private static int CLIENT_ID = 0;
 
     public static void main(String[] args) {
         System.out.println("Connecting to the chat room via " + HOST + ":" + PORT);
@@ -19,6 +18,7 @@ class ClientTCP {
 
             String serverResponse = in.readLine(); // Read the response from the server
 
+            int CLIENT_ID;
             if (serverResponse.equals("Sorry, the chatroom is full!")) {
                 System.out.println(serverResponse);
                 socket.close();
@@ -31,7 +31,7 @@ class ClientTCP {
             System.out.println("Successful connection");
             System.out.println("Your personal ID is : " + CLIENT_ID);
 
-            User user = new User(out, CLIENT_ID);
+            User user = new User(out, CLIENT_ID, in);
 
             Thread threadUser = new Thread(user);
 

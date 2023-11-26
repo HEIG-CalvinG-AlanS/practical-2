@@ -4,66 +4,49 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List; // peut etre maven dependency????
+import java.util.Map;
+import java.util.HashMap;
 
 public class ServerTCP {
     private static final int PORT = 1234;
-    private static final int SERVER_ID = (int) (Math.random() * 1000000);    // si port fixe, id sert a rien
-    public static String FILE_PATH = "pw2/history.txt"; //la mettre en const
+    private static final int SERVER_ID = (int) (Math.random() * 1000000);// si port fixe, id sert a rien
+    private static final String SERVER_MESSAGE = "[Server " + SERVER_ID + "] ";
+    public static final String FILE_PATH = "pw2/history.txt";
     public static int CHATROOM_SIZE = 3;
-    private static ArrayList<ClientHandler> onlineUsers;
+    private static final Map<Integer, String> idUsername = new HashMap<>();
 
-    public static int firstAvailableID(ArrayList<ClientHandler> array) {
-        int lowestCandidate = 0;
 
+    public static int firstAvailableID(Map<Integer, String> idUsernameMap) {
         for (int i = 0; i < CHATROOM_SIZE; i++) {
-            boolean used = false;
-
-            for (ClientHandler c : array) {
-                if (c.getID() == i) {
-                    used = true;
-                    break;
-                }
-            }
-
-            if (!used) {
-                lowestCandidate = i;
-                break;
+            if (!idUsernameMap.containsKey(i)) {
+                return i;
             }
         }
-
-        return lowestCandidate;
+        return -1;
     }
 
     public static void main(String[] args) {
 
-        try (ServerSocket serverSocket = new ServerSocket(PORT);) {
-
-            System.out.println(
-                    "[Server " + SERVER_ID + "] starting with id " + SERVER_ID
-            );
-            System.out.println(
-                    "[Server " + SERVER_ID + "] listening on port " + PORT
-            );
-
-            onlineUsers = new ArrayList<>();
+        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+            System.out.println(SERVER_MESSAGE + "starting with id " + SERVER_ID);
+            System.out.println(SERVER_MESSAGE + "listening on port " + PORT);
 
             while (true) {
                 try {
                     Socket clientSocket = serverSocket.accept();
+
                     PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-                    if (onlineUsers.size() < CHATROOM_SIZE) {
+                    if (idUsername.size() < CHATROOM_SIZE) {
                         ClientHandler clientHandler = new ClientHandler(clientSocket);
-                        onlineUsers.add(clientHandler);
-                        clientHandler.setID(firstAvailableID(onlineUsers));
+                        clientHandler.setID(firstAvailableID(idUsername));
+                        idUsername.put(clientHandler.getID(), "Anonymous");
                         out.println(clientHandler.getID());//Send the new client his ID
                         Thread clientThread = new Thread(clientHandler);
                         clientThread.start();
                     } else {
                         out.println("Sorry, the chatroom is full!");
                         clientSocket.close();
-                        System.out.println("Connection attempt from client refused: chatroom is full.");
+                        System.out.println("CHATROOM FULL");
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -71,7 +54,7 @@ public class ServerTCP {
             }
 
         } catch (IOException e) {
-            System.out.println("[Server " + SERVER_ID + "] exception: " + e);
+            System.out.println(SERVER_MESSAGE +  "exception: " + e);
         }
     }
 
@@ -95,7 +78,7 @@ public class ServerTCP {
         @Override
         public void run() {
             try (
-                    socket; // This allow to use try-with-resources with the socket
+                    socket; // This allows to use try-with-resources with the socket
                     BufferedReader in = new BufferedReader(
                             new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8)
                     );
@@ -107,15 +90,15 @@ public class ServerTCP {
                     )
             ) {
                 System.out.println(
-                        "[Server " + SERVER_ID + "] new client connected from " + socket.getInetAddress().getHostAddress() + ":" + socket.getPort()
+                        SERVER_MESSAGE + "new client connected from " + socket.getInetAddress().getHostAddress() + ":" + socket.getPort()
                 );
 
                 System.out.println(
-                        "[Server " + SERVER_ID + "] number of online clients :" + onlineUsers.size()
+                        SERVER_MESSAGE + "number of online clients :" + idUsername.size()
                 );
 
                 // Send the last written line from the history
-                String lastLine = "";
+               /* String lastLine = "";
 
                 BufferedReader br = null;
                 try {
@@ -137,12 +120,33 @@ public class ServerTCP {
                 }
                 out.write(lastLine + "\n"); // sert a envoyer lastline au client
                 out.flush();
-
+*/
                 String userInput = "";
 
                 while (userInput != null) {
                     // Write the user input into the history file
                     userInput = in.readLine();
+                    String[] splittedInput = userInput.split(" ");
+
+                    if (userInput.equals("ONLINE")) {
+                        out.write(idUsername.size() + "\n");
+                        out.flush();
+
+                        for (Map.Entry<Integer, String> entry : idUsername.entrySet()) {
+                            String key = String.valueOf(entry.getKey());
+                            String value = entry.getValue();
+                            out.write("ID : " + key + ", username : " + value + "\n");
+                            out.flush();
+                        }
+
+                        out.write("END\n");
+                        out.flush();
+                    }
+                    if (splittedInput[0].equals("USERNAME")) {
+                        idUsername.put(clientID, splittedInput[1]);
+                        out.write("Your new username is " + splittedInput[1] + "\n");
+                        out.flush();
+                    }
 
                     try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
                         if (userInput != null && userInput.charAt(5) != '/') {
@@ -155,14 +159,13 @@ public class ServerTCP {
 
                 }
             } catch (IOException e) {
-                System.out.println("[Server " + SERVER_ID + "] exception: " + e);
+                System.out.println(SERVER_MESSAGE + "exception: " + e);
             }
 
-            onlineUsers.remove(this);
-            System.out.println("[Server " + SERVER_ID + "] closing connection");
-            System.out.println(
-                    "[Server " + SERVER_ID + "] number of online clients :" + onlineUsers.size()
-            );
+            idUsername.remove(this.getID());
+
+            System.out.println(SERVER_MESSAGE + "closing connection");
+            System.out.println(SERVER_MESSAGE + "number of online clients :" + idUsername.size());
         }
     }
 }
