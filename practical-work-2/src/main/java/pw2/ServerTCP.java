@@ -15,7 +15,6 @@ public class ServerTCP {
     public static int CHATROOM_SIZE = 3;
     private static final Map<Integer, String> idUsername = new HashMap<>();
 
-
     public static int firstAvailableID(Map<Integer, String> idUsernameMap) {
         for (int i = 0; i < CHATROOM_SIZE; i++) {
             if (!idUsernameMap.containsKey(i)) {
@@ -26,7 +25,8 @@ public class ServerTCP {
     }
 
     public static void emptyHistory() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, false))) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+                new FileOutputStream(FILE_PATH, false), StandardCharsets.UTF_8))) {
             System.out.println(SERVER_MESSAGE + "History reseted");
         } catch (IOException e) {
             System.err.println("Error: " + e.getMessage());
@@ -44,16 +44,16 @@ public class ServerTCP {
                 try {
                     Socket clientSocket = serverSocket.accept();
 
-                    PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+                    PrintWriter outCheck = new PrintWriter(clientSocket.getOutputStream(), true);
                     if (idUsername.size() < CHATROOM_SIZE) {
                         ClientHandler clientHandler = new ClientHandler(clientSocket);
                         clientHandler.setID(firstAvailableID(idUsername));
                         idUsername.put(clientHandler.getID(), "Anonymous");
-                        out.println(clientHandler.getID());//Send the new client his ID
+                        outCheck.println(clientHandler.getID()); //Send the new client his ID
                         Thread clientThread = new Thread(clientHandler);
                         clientThread.start();
                     } else {
-                        out.println("Sorry, the chatroom is full!");
+                        outCheck.println("Sorry, the chatroom is full!");
                         clientSocket.close();
                         System.out.println("CHATROOM FULL");
                     }
@@ -107,33 +107,9 @@ public class ServerTCP {
                         SERVER_MESSAGE + "number of online clients :" + idUsername.size()
                 );
 
-                // Send the last written line from the history
-               /* String lastLine = "";
-
-                BufferedReader br = null;
-                try {
-                    String sCurrentLine;
-
-                    br = new BufferedReader(new FileReader(FILE_PATH));
-
-                    while ((sCurrentLine = br.readLine()) != null) {
-                        lastLine = sCurrentLine;
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    try {
-                        if (br != null) br.close();
-                    } catch (IOException ex) {
-                        ex.printStackTrace();
-                    }
-                }
-                out.write(lastLine + "\n"); // sert a envoyer lastline au client
-                out.flush();
-*/
                 String userInput = "";
 
-                while (userInput != null) {
+                while (!userInput.equals("QUIT")) {
                     // Write the user input into the history file
                     userInput = in.readLine();
                     String[] splittedInput = userInput.split(" ");
@@ -153,20 +129,18 @@ public class ServerTCP {
                         out.flush();
                         break;
                     }
-                    if (splittedInput[0].equals("USERNAME")) {
+                    else if (splittedInput[0].equals("USERNAME")) {
                         idUsername.put(clientID, splittedInput[1]);
                         out.write("Your new username is " + splittedInput[1] + "\n");
                         out.flush();
                     }
-                    if (splittedInput[0].equals("QUIT")) {
-                        break;
-                    }
 
 
-                    try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
+                    try (BufferedWriter fileWriter = new BufferedWriter(new OutputStreamWriter(
+                            new FileOutputStream(FILE_PATH, true), StandardCharsets.UTF_8))) {
                         if (userInput != null && userInput.charAt(0) == '[') {
-                            writer.write(userInput + "\n"); // systems differents, pas \n
-                            writer.flush();
+                            fileWriter.write(userInput + "\n"); // systems differents, pas \n
+                            fileWriter.flush();
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -181,7 +155,6 @@ public class ServerTCP {
                 }
             }
 
-            //B
             idUsername.remove(this.getID());
 
             System.out.println(SERVER_MESSAGE + "closing connection");
