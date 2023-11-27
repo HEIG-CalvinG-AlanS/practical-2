@@ -27,7 +27,7 @@ public class ServerTCP {
 
     public static void emptyHistory() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, false))) {
-           System.out.println(SERVER_MESSAGE + "History reseted");
+            System.out.println(SERVER_MESSAGE + "History reseted");
         } catch (IOException e) {
             System.err.println("Error: " + e.getMessage());
         }
@@ -58,6 +58,7 @@ public class ServerTCP {
                         System.out.println("CHATROOM FULL");
                     }
                 } catch (IOException e) {
+
                     e.printStackTrace();
                 }
             }
@@ -150,15 +151,20 @@ public class ServerTCP {
 
                         out.write("END\n");
                         out.flush();
+                        break;
                     }
                     if (splittedInput[0].equals("USERNAME")) {
                         idUsername.put(clientID, splittedInput[1]);
                         out.write("Your new username is " + splittedInput[1] + "\n");
                         out.flush();
                     }
+                    if (splittedInput[0].equals("QUIT")) {
+                        break;
+                    }
+
 
                     try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
-                        if (userInput != null && userInput.charAt(5) != '/') {
+                        if (userInput != null && !userInput.equals("QUIT\n")) {
                             writer.write(userInput + "\n"); // systems differents, pas \n
                             writer.flush();
                         }
@@ -168,9 +174,14 @@ public class ServerTCP {
 
                 }
             } catch (IOException e) {
-                System.out.println(SERVER_MESSAGE + "exception: " + e);
+                if (e instanceof java.net.SocketException && e.getMessage().equals("Connection reset")) {
+
+                } else {
+                    e.printStackTrace();
+                }
             }
 
+            //B
             idUsername.remove(this.getID());
 
             System.out.println(SERVER_MESSAGE + "closing connection");
