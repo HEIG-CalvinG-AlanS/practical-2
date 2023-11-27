@@ -164,7 +164,7 @@ public class ServerTCP {
 
 
                     try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
-                        if (userInput != null && !userInput.equals("QUIT\n")) {
+                        if (userInput != null && userInput.charAt(0) == '[') {
                             writer.write(userInput + "\n"); // systems differents, pas \n
                             writer.flush();
                         }
