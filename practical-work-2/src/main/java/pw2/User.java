@@ -14,13 +14,15 @@ public class User implements Runnable {
     private final int ID;
     private final BufferedWriter out;
     private final BufferedReader in;
+    private final BufferedReader file;
     private boolean isReading;
 
     User(BufferedWriter out, int id, BufferedReader in) throws IOException {
         this.out = out;
         this.ID = id;
+        this.in = in;
         try {
-            this.in = new BufferedReader(new FileReader(FILE_PATH));
+            this.file = new BufferedReader(new FileReader(FILE_PATH));
         }
         catch (FileNotFoundException e) {
             throw new RuntimeException("[#" + ID + "] Error opening history file : " + e);
@@ -42,23 +44,37 @@ public class User implements Runnable {
     public void readFile() {
         String userInput = "";
         try {
-            while ((in.readLine()) != null) { } // Passez toutes les lignes déjà présente
-                while (isReading) {
-                    userInput = in.readLine();
-                    if (userInput != null) afficherNouveauMessage(userInput);
-                }
+            while ((file.readLine()) != null) { } // Passez toutes les lignes déjà présente
+            while (isReading) {
+                userInput = file.readLine();
+                if (userInput != null) showNewMsg(userInput);
+            }
         }
         catch (IOException e) {
             throw new RuntimeException("[#" + ID + "] Error reading history file : " + e);
         }
     }
 
-    private void afficherNouveauMessage(String message) {
+    private void showNewMsg(String message) {
+        String color = "";
+        switch (message.charAt(2)) {
+            case '0': color = "\u001B[31m"; break; // Rouge
+            case '1': color = "\u001B[32m"; break; // Vert
+            case '2': color = "\u001B[33m"; break; // Jaune
+            case '3': color = "\u001B[34m"; break; // Bleu
+            case '4': color = "\u001B[35m"; break; // Magenta
+            case '5': color = "\u001B[36m"; break; // Cyan
+            case '6': color = "\u001B[37m"; break; // Blanc
+            case '7': color = "\u001B[30m"; break; // Noir
+            case '8': color = "\u001B[90m"; break; // Gris clair
+            case '9': color = "\u001B[94m"; break; // Bleu clair
+        }
+
         // Déplacer le curseur vers le haut | Les deux lignes ci-dessous ont été réalisées par ChatGPT
         System.out.print("\033[2K"); // Efface la ligne actuelle
         System.out.print("\r"); // Place le curseur au début de la ligne
 
-        System.out.println(message);
+        System.out.println(color + message + "\u001B[37m"); // Modifie la couleur, affiche le message, remet en blanc
         System.out.print("> ");
     }
 
@@ -120,14 +136,19 @@ public class User implements Runnable {
                     System.out.print("> ");
                     break;
                 default:
-                    try {
-                        System.out.print("\033[1A"); // Déplace le curseur vers le haut d'une ligne
-                        System.out.print("\033[2K"); // Efface la ligne
+                    if(msg.charAt(0) == '/') {
+                        showNewMsg("The enter command does not exist. Type /help to see the commands available.");
+                    }
+                    else {
+                        try {
+                            System.out.print("\033[1A"); // Déplace le curseur vers le haut d'une ligne
+                            System.out.print("\033[2K"); // Efface la ligne
 
-                        out.write("[#" + ID + "] " + msg + "\n");
-                        out.flush();
-                    } catch (IOException e) {
-                        throw new RuntimeException("[#" + ID + "] Error writing to history file" + e);
+                            out.write("[#" + ID + "] " + msg + "\n");
+                            out.flush();
+                        } catch (IOException e) {
+                            throw new RuntimeException("[#" + ID + "] Error writing to history file" + e);
+                        }
                     }
             }
         }
