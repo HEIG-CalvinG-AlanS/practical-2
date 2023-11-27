@@ -1,16 +1,13 @@
 package pw2;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.FileReader;
-import java.io.FileNotFoundException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 public class User implements Runnable {
     public final static String FILE_PATH = "pw2/history.txt";
     private String username;
-    private final Scanner message;
+    private Scanner message = null;
     private final int ID;
     private final BufferedWriter out;
     private final BufferedReader in;
@@ -22,14 +19,16 @@ public class User implements Runnable {
         this.ID = id;
         this.in = in;
         try {
-            this.file = new BufferedReader(new FileReader(FILE_PATH));
+            this.file = new BufferedReader(new InputStreamReader(new FileInputStream(FILE_PATH), StandardCharsets.
+                                                                 
+                                                                 _8));
         }
         catch (FileNotFoundException e) {
             throw new RuntimeException("[#" + ID + "] Error opening history file : " + e);
         }
 
         isReading = true;
-        message = new Scanner(System.in);
+        message = new Scanner(System.in, StandardCharsets.UTF_8);
         username = "";
 
         changeUsername();
@@ -55,9 +54,9 @@ public class User implements Runnable {
         }
     }
 
-    private void showNewMsg(String message) {
+    private void showNewMsg(String msg) {
         String color = "";
-        switch (message.charAt(2)) {
+        switch (msg.charAt(2)) {
             case '0': color = "\u001B[31m"; break; // Rouge
             case '1': color = "\u001B[32m"; break; // Vert
             case '2': color = "\u001B[33m"; break; // Jaune
@@ -74,7 +73,7 @@ public class User implements Runnable {
         System.out.print("\033[2K"); // Efface la ligne actuelle
         System.out.print("\r"); // Place le curseur au début de la ligne
 
-        System.out.println(color + message + "\u001B[37m"); // Modifie la couleur, affiche le message, remet en blanc
+        System.out.println(color + msg + "\u001B[37m"); // Modifie la couleur, affiche le message, remet en blanc
         System.out.print("> ");
     }
 
@@ -157,4 +156,5 @@ public class User implements Runnable {
             this.username = message.nextLine();
         } while(username.isEmpty());
     }
+
 }
