@@ -19,7 +19,9 @@ public class User implements Runnable {
         this.ID = id;
         this.in = in;
         try {
-            this.file = new BufferedReader(new InputStreamReader(new FileInputStream(FILE_PATH), StandardCharsets.UTF_8));
+            this.file = new BufferedReader(new InputStreamReader(new FileInputStream(FILE_PATH), StandardCharsets.
+                                                                 
+                                                                 _8));
         }
         catch (FileNotFoundException e) {
             throw new RuntimeException("[#" + ID + "] Error opening history file : " + e);
@@ -75,7 +77,6 @@ public class User implements Runnable {
         System.out.print("> ");
     }
 
-
     public void run() {
         Thread readFile = new Thread(this::readFile);
         readFile.start();
@@ -98,24 +99,23 @@ public class User implements Runnable {
                     break;
                 case "/online":
                     try {
+                        System.out.print("\033[1A"); // Déplace le curseur vers le haut d'une ligne
+                        System.out.print("\033[2K"); // Efface la ligne
+
                         out.write("ONLINE\n");
                         out.flush();
 
                         String serverResponse = in.readLine();
 
-                        if (Integer.parseInt(serverResponse) > 1) {
-                            System.out.println("There are currently " + serverResponse + " users online:\n");
-                        } else {
-                            System.out.println("There is currently " + serverResponse + " user online:\n");
-                        }
+                        if (Integer.parseInt(serverResponse) > 1) showNewMsg("There are currently " + serverResponse + " users online:\n");
+                        else showNewMsg("There is currently " + serverResponse + " user online:\n");
 
                         // Read and display the online users
                         serverResponse = in.readLine();
                         while (!serverResponse.equals("END")) {
-                            System.out.println(serverResponse);
+                            showNewMsg(serverResponse);
                             serverResponse = in.readLine();
                         }
-                        System.out.print("> ");
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -132,21 +132,19 @@ public class User implements Runnable {
                     System.out.print("\033[2K"); // Efface la ligne
                     System.out.print("> ");
                     break;
+                case "/quit":
+                    break;
                 default:
-                    if(msg.charAt(0) == '/') {
-                        showNewMsg("The enter command does not exist. Type /help to see the commands available.");
+                    try {
+                        System.out.print("\033[1A"); // Déplace le curseur vers le haut d'une ligne
+                        System.out.print("\033[2K"); // Efface la ligne
+
+                        out.write("MSG [#" + ID + "] " + msg + "\n");
+                        out.flush();
+                    } catch (IOException e) {
+                        throw new RuntimeException("[#" + ID + "] Error writing to history file" + e);
                     }
-                    else {
-                        try {
-                            System.out.print("\033[1A"); // Déplace le curseur vers le haut d'une ligne
-                            System.out.print("\033[2K"); // Efface la ligne
-                            showNewMsg("Avant Write : " + msg);
-                            out.write("[#" + ID + "] " + msg + "\n");
-                            out.flush();
-                        } catch (IOException e) {
-                            throw new RuntimeException("[#" + ID + "] Error writing to history file" + e);
-                        }
-                    }
+
             }
         }
         isReading = false;

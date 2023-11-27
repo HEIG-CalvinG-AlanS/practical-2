@@ -108,8 +108,8 @@ public class ServerTCP {
                 );
 
                 String userInput = "";
-
-                while (!userInput.equals("QUIT")) {
+              
+                while (true) {
                     // Write the user input into the history file
                     userInput = in.readLine();
                     String[] splittedInput = userInput.split(" ");
@@ -127,25 +127,30 @@ public class ServerTCP {
 
                         out.write("END\n");
                         out.flush();
-                        break;
+                    }
+                    else if (splittedInput[0].equals("MSG")) {
+                        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
+                            StringBuilder resultStringBuilder = new StringBuilder();
+                            for (int i = 1; i < splittedInput.length; i++) {
+                                resultStringBuilder.append(splittedInput[i]).append(" ");
+                            }
+
+                            String resultString = resultStringBuilder.toString();
+
+                            writer.write(resultString + "\n"); // systems differents, pas \n
+                            writer.flush();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                     else if (splittedInput[0].equals("USERNAME")) {
                         idUsername.put(clientID, splittedInput[1]);
                         out.write("Your new username is " + splittedInput[1] + "\n");
                         out.flush();
                     }
-
-
-                    try (BufferedWriter fileWriter = new BufferedWriter(new OutputStreamWriter(
-                            new FileOutputStream(FILE_PATH, true), StandardCharsets.UTF_8))) {
-                        if (userInput != null && userInput.charAt(0) == '[') {
-                            fileWriter.write(userInput + "\n"); // systems differents, pas \n
-                            fileWriter.flush();
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    else if (splittedInput[0].equals("QUIT")) {
+                        break;
                     }
-
                 }
             } catch (IOException e) {
                 if (e instanceof java.net.SocketException && e.getMessage().equals("Connection reset")) {
