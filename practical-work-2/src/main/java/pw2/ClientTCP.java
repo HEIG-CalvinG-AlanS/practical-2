@@ -8,6 +8,7 @@ class ClientTCP {
 
     private static final String HOST = "localhost";
     private static final int PORT = 1234;
+    private static final String CLIENT_ERROR = "[ERROR] ";
 
     public static void main(String[] args) {
         System.out.println("Connecting to the chat room via " + HOST + ":" + PORT);
@@ -24,9 +25,7 @@ class ClientTCP {
                 socket.close();
                 return;
             }
-            else{
-                CLIENT_ID = Integer.parseInt(serverResponse);
-            }
+            else CLIENT_ID = Integer.parseInt(serverResponse);
 
             System.out.println("Successful connection");
             System.out.println("Your personal ID is : " + CLIENT_ID);
@@ -34,23 +33,26 @@ class ClientTCP {
             User user = new User(out, CLIENT_ID, in);
 
             Thread threadUser = new Thread(user);
-
-            //p-e un join??
+            threadUser.join();
 
             try {
                 out.write("QUIT\n");  // Inform the server that the user is leaving
                 out.flush();
-                socket.close();  // Close the socket when leaving
             } catch (IOException e) {
-                e.printStackTrace();  // Handle the exception appropriately
+                System.out.println(CLIENT_ERROR + "The response to the server could not be sent");
             }
+
+            out.close();
+            in.close();
+            socket.close();
 
             System.out.println("\nYou have left the chatroom.");
         } catch (ConnectException e) {
-            System.out.println("Unable to connect to the server. Please make sure the server is running.");
+            System.out.println(CLIENT_ERROR + "Unable to connect to the server. Please make sure the server is running.");
         } catch (IOException ex) {
             throw new RuntimeException(ex);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(CLIENT_ERROR + "The thread was interrupted while in the waiting state");
         }
     }
-
 }

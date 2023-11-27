@@ -11,8 +11,8 @@ public class ServerTCP {
     private static final int PORT = 1234;
     private static final int SERVER_ID = (int) (Math.random() * 1000000);
     private static final String SERVER_MESSAGE = "[Server " + SERVER_ID + "] ";
-    public static final String FILE_PATH = "pw2/history.txt";
-    public static int CHATROOM_SIZE = 10;
+    private static final String FILE_PATH = "pw2/history.txt";
+    private static final int CHATROOM_SIZE = 10;
     private static final String SERVER_ERROR = "[ERROR] ";
     private static final Map<Integer, String> idUsername = new HashMap<>();
 
@@ -28,7 +28,7 @@ public class ServerTCP {
     public static void emptyHistory() throws IOException {
         OutputStreamWriter writer = null;
         try {
-            //the false argument of OutputStreamWriter empties the file
+            // The false argument of OutputStreamWriter empties the file
             writer = new OutputStreamWriter(new FileOutputStream(FILE_PATH, false), StandardCharsets.UTF_8);
             System.out.println(SERVER_MESSAGE + "History reset");
         } catch (IOException e) {
@@ -39,7 +39,7 @@ public class ServerTCP {
         }
     }
 
-    //Creates the loop that accepts/rejects upcoming connections
+    // Creates the loop that accepts/rejects upcoming connections
     public static void main(String[] args) {
 
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
@@ -54,13 +54,13 @@ public class ServerTCP {
 
                     if (idUsername.size() < CHATROOM_SIZE) {
                         ClientHandler clientHandler = new ClientHandler(clientSocket);
-                        clientHandler.setID(firstAvailableID(idUsername)); // choose an id for the new client
-                        idUsername.put(clientHandler.getID(), "Anonymous");// give the new client a temp name
-                        outCheck.println(clientHandler.getID()); //Send the new client his ID
+                        clientHandler.setID(firstAvailableID(idUsername)); // Choose an id for the new client
+                        idUsername.put(clientHandler.getID(), "Anonymous");// Give the new client a temp name
+                        outCheck.println(clientHandler.getID()); // Send the new client his ID
                         Thread clientThread = new Thread(clientHandler);
                         clientThread.start();
                     } else {
-                        outCheck.println("Sorry, the chatroom is full!");
+                        outCheck.println("Sorry, the chatroom is full !");
                         clientSocket.close();
                         System.out.println(SERVER_MESSAGE + "CHATROOM FULL");
                     }
@@ -114,11 +114,11 @@ public class ServerTCP {
                     String[] splitInput = userInput.split(" ");
 
                     if (userInput.equals("ONLINE")) {
-                        //Send the number of connected clients
+                        // Send the number of connected clients
                         out.write(idUsername.size() + "\n");
                         out.flush();
 
-                        //Send the list of every connected clients
+                        // Send the list of every connected clients
                         for (Map.Entry<Integer, String> entry : idUsername.entrySet()) {
                             String key = String.valueOf(entry.getKey());
                             String value = entry.getValue();
@@ -133,7 +133,7 @@ public class ServerTCP {
                         try {
                             writer = new BufferedWriter(new FileWriter(FILE_PATH, true));
 
-                            //so that "MSG" is not present on the message
+                            // So that "MSG" is not present on the message
                             StringBuilder resultStringBuilder = new StringBuilder();
                             for (int i = 1; i < splitInput.length; i++) {
                                 resultStringBuilder.append(splitInput[i]).append(" ");
@@ -145,13 +145,7 @@ public class ServerTCP {
                         } catch (IOException e) {
                             System.out.println(SERVER_ERROR + " there has been an issue while writing the message");
                         } finally {
-                            if (writer != null) {
-                                try {
-                                    writer.close();
-                                } catch (IOException e) {
-                                    System.out.println(SERVER_ERROR + " there has been an issue while closing the writer");
-                                }
-                            }
+                            if (writer != null) writer.close();
                         }
                     } else if (splitInput[0].equals("USERNAME")) {
                         idUsername.put(clientID, splitInput[1]);
