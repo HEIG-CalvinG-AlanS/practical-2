@@ -37,6 +37,14 @@ class ClientTCP {
 
             //p-e un join??
 
+            try {
+                out.write("QUIT\n");  // Inform the server that the user is leaving
+                out.flush();
+                socket.close();  // Close the socket when leaving
+            } catch (IOException e) {
+                e.printStackTrace();  // Handle the exception appropriately
+            }
+
             System.out.println("\nYou have left the chatroom.");
         } catch (ConnectException e) {
             System.out.println("Unable to connect to the server. Please make sure the server is running.");
