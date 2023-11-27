@@ -19,9 +19,7 @@ public class User implements Runnable {
         this.ID = id;
         this.in = in;
         try {
-            this.file = new BufferedReader(new InputStreamReader(new FileInputStream(FILE_PATH), StandardCharsets.
-                                                                 
-                                                                 _8));
+            this.file = new BufferedReader(new InputStreamReader(new FileInputStream(FILE_PATH), StandardCharsets. UTF_8));
         }
         catch (FileNotFoundException e) {
             throw new RuntimeException("[#" + ID + "] Error opening history file : " + e);
