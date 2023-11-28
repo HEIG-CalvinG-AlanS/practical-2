@@ -60,7 +60,7 @@ public class ServerTCP {
                         Thread clientThread = new Thread(clientHandler);
                         clientThread.start();
                     } else {
-                        outCheck.println("Sorry, the chatroom is full !");
+                        outCheck.println(-1);
                         clientSocket.close();
                         System.out.println(SERVER_MESSAGE + "CHATROOM FULL");
                     }
@@ -92,7 +92,6 @@ public class ServerTCP {
         @Override
         public void run() {
             try (
-                    socket;
                     BufferedReader in = new BufferedReader(
                             new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
                     BufferedWriter out = new BufferedWriter(
@@ -129,10 +128,8 @@ public class ServerTCP {
                         out.write("END\n");
                         out.flush();
                     } else if (splitInput[0].equals("MSG")) {
-                        BufferedWriter writer = null;
-                        try {
-                            writer = new BufferedWriter(new FileWriter(FILE_PATH, true));
-
+                        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true)))
+                        {
                             // So that "MSG" is not present on the message
                             StringBuilder resultStringBuilder = new StringBuilder();
                             for (int i = 1; i < splitInput.length; i++) {
@@ -140,12 +137,20 @@ public class ServerTCP {
                             }
                             String resultString = resultStringBuilder.toString();
 
-                            writer.write(resultString + "\n");
-                            writer.flush();
+                            if(resultString.length() < 100) {
+                                out.write("RCV\n");
+                                out.flush();
+                                writer.write(resultString + "\n");
+                                writer.flush();
+                            }
+                            else{
+                                out.write("ERROR Messages must be 100 char or less\n");
+                                out.flush();
+                            }
                         } catch (IOException e) {
                             System.out.println(SERVER_ERROR + " there has been an issue while writing the message");
-                        } finally {
-                            if (writer != null) writer.close();
+                            out.write("The message couldn't be sent\n"); // envoie l'information au client
+                            out.flush();
                         }
                     } else if (splitInput[0].equals("USERNAME")) {
                         idUsername.put(clientID, splitInput[1]);
@@ -161,9 +166,7 @@ public class ServerTCP {
                 }
             } finally {
                 try {
-                    if (socket != null && !socket.isClosed()) {
-                        socket.close();
-                    }
+                    if (!socket.isClosed()) socket.close();
                 } catch (IOException e) {
                     System.out.println(SERVER_ERROR + " there has been an issue while closing the socket");
                 }

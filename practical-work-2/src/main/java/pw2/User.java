@@ -2,6 +2,7 @@ package pw2;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 public class User implements Runnable {
@@ -48,8 +49,9 @@ public class User implements Runnable {
             }
         }
         catch (IOException e) {
-            throw new RuntimeException(CLIENT_ERROR + "Unable to read history file");
+            System.out.println(CLIENT_ERROR + "Unable to read history file");
         }
+        System.exit(0);
     }
 
     private void showNewMsg(String msg) {
@@ -76,6 +78,67 @@ public class User implements Runnable {
         System.out.print("> ");
     }
 
+    private void getHelp() {
+        System.out.println("\nAll available commands:");
+        System.out.println("\n\t/username : Change your username");
+        System.out.println("\n\t/online : See all connected users");
+        System.out.println("\n\t/quit : Quit the chat room\n");
+        System.out.print("> ");
+    }
+
+    private void getOnline() {
+        try {
+            System.out.print("\033[1A"); // Moves the cursor to the top of a line
+            System.out.print("\033[2K"); // Delete the line
+            out.write("ONLINE\n");
+            out.flush();
+
+            String serverResponse = in.readLine();
+            if (Integer.parseInt(serverResponse) > 1) showNewMsg("There are currently " + serverResponse + " users online :\n");
+            else showNewMsg("There is currently " + serverResponse + " user online :\n");
+
+            // Read and display the online users
+            serverResponse = in.readLine();
+            while (!serverResponse.equals("END")) {
+                showNewMsg(serverResponse);
+                serverResponse = in.readLine();
+            }
+        } catch (IOException e) {
+            try {
+                out.close();
+            } catch (IOException ex) {
+                System.out.println(CLIENT_ERROR + "There has been an issue while the writer");
+            }
+            System.out.println(CLIENT_ERROR + "The server response could not be read");
+        }
+    }
+
+    private void sendMessage(String msg) {
+        try {
+            System.out.print("\033[1A"); // Déplace le curseur vers le haut d'une ligne
+            System.out.print("\033[2K"); // Efface la ligne
+
+            // Send the message to the server
+            out.write("MSG [#" + ID + "] " + username + ": " + msg + "\n");
+            out.flush();
+
+            String serverResponse = in.readLine();
+            if(!serverResponse.equals("RCV")) { // Only displays the server response if there is an error
+               System.out.println(serverResponse);
+               System.out.print("> ");
+            }
+
+
+        } catch (IOException e) {
+            try {
+                out.close();
+            } catch (IOException ex) {
+                System.out.println(CLIENT_ERROR + "There has been an issue while closing the writer");
+            }
+            System.out.println(CLIENT_ERROR + "Unable to write to history file");
+        }
+    }
+
     public void run() {
         Thread readFile = new Thread(this::readFile);
         readFile.start();
@@ -85,53 +148,13 @@ public class User implements Runnable {
             msg = message.nextLine();
             switch (msg) {
                 case "/username":
-                    try {
-                        changeUsername();
-                        out.write("USERNAME " + username + "\n"); // Send the new username to the server
-                        out.flush();
-                        System.out.println(in.readLine());
-                        System.out.print("> ");
-                    } catch (IOException e) {
-                        try {
-                            out.close();
-                        } catch (IOException ex) {
-                            System.out.println(CLIENT_ERROR + "There has been an issue while the writer");
-                        }
-                        System.out.println(CLIENT_ERROR + "The response to the server could not be sent");
-                    }
+                    changeUsername();
                     break;
                 case "/online":
-                    try {
-                        System.out.print("\033[1A"); // Moves the cursor to the top of a line
-                        System.out.print("\033[2K"); // Delete the line
-                        out.write("ONLINE\n");
-                        out.flush();
-
-                        String serverResponse = in.readLine();
-                        if (Integer.parseInt(serverResponse) > 1) showNewMsg("There are currently " + serverResponse + " users online :\n");
-                        else showNewMsg("There is currently " + serverResponse + " user online :\n");
-
-                        // Read and display the online users
-                        serverResponse = in.readLine();
-                        while (!serverResponse.equals("END")) {
-                            showNewMsg(serverResponse);
-                            serverResponse = in.readLine();
-                        }
-                    } catch (IOException e) {
-                        try {
-                            out.close();
-                        } catch (IOException ex) {
-                            System.out.println(CLIENT_ERROR + "There has been an issue while the writer");
-                        }
-                        System.out.println(CLIENT_ERROR + "The server response could not be read");
-                    }
+                    getOnline();
                     break;
                 case "/help":
-                    System.out.println("\nAll available commands:");
-                    System.out.println("\n\t/username : Change your username");
-                    System.out.println("\n\t/online : See all connected users");
-                    System.out.println("\n\t/quit : Quit the chat room\n");
-                    System.out.print("> ");
+                    getHelp();
                     break;
                 case "":
                     System.out.print("\033[1A"); // Moves the cursor to the top of a line
@@ -141,21 +164,7 @@ public class User implements Runnable {
                 case "/quit":
                     break;
                 default:
-                    try {
-                        System.out.print("\033[1A"); // Déplace le curseur vers le haut d'une ligne
-                        System.out.print("\033[2K"); // Efface la ligne
-
-                        // Send the message to the server
-                        out.write("MSG [#" + ID + "] " + username + ": " + msg + "\n");
-                        out.flush();
-                    } catch (IOException e) {
-                        try {
-                            out.close();
-                        } catch (IOException ex) {
-                            System.out.println(CLIENT_ERROR + "There has been an issue while closing the writer");
-                        }
-                        System.out.println(CLIENT_ERROR + "Unable to write to history file");
-                    }
+                    sendMessage(msg);
             }
         }
         isReading = false;
@@ -170,13 +179,30 @@ public class User implements Runnable {
         } catch (IOException e) {
             System.out.println(CLIENT_ERROR + "There has been an issue while closing the writer or reader");
         }
+        System.exit(0);
     }
 
     private void changeUsername() {
         do {
             System.out.println("\nPlease enter your username : ");
             this.username = message.nextLine();
+            username = username.replace(" ", "");
+            if(username.isEmpty() || username.length() > 15)
+                System.out.println("\nYour username must contain between 1 and 15 characters.");
         } while(username.isEmpty() || username.length() > 15);
-    }
 
+        try {
+            out.write("USERNAME " + username + "\n"); // Send the new username to the server
+            out.flush();
+            System.out.println(in.readLine());
+            System.out.print("> ");
+        } catch (IOException e) {
+            try {
+                out.close();
+            } catch (IOException ex) {
+                System.out.println(CLIENT_ERROR + "There has been an issue while the writer");
+            }
+            System.out.println(CLIENT_ERROR + "The response to the server could not be sent");
+        }
+    }
 }
