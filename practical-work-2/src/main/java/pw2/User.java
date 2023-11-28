@@ -33,7 +33,7 @@ public class User implements Runnable {
         changeUsername();
         out.write("USERNAME " + username + "\n"); // Send the new username to the server
         out.flush();
-        System.out.println(in.readLine());
+        in.readLine();
         System.out.println("\nWelcome on the chat room " + username + " !\n");
         System.out.println("To see all available command, type: /help\n");
         run();
@@ -149,6 +149,19 @@ public class User implements Runnable {
             switch (msg) {
                 case "/username":
                     changeUsername();
+                    try {
+                        out.write("USERNAME " + username + "\n"); // Send the new username to the server
+                        out.flush();
+                        System.out.println(in.readLine());
+                        System.out.print("> ");
+                    } catch (IOException e) {
+                        try {
+                            out.close();
+                        } catch (IOException ex) {
+                            System.out.println(CLIENT_ERROR + "There has been an issue while the writer");
+                        }
+                        System.out.println(CLIENT_ERROR + "The response to the server could not be sent");
+                    }
                     break;
                 case "/online":
                     getOnline();
@@ -190,19 +203,5 @@ public class User implements Runnable {
             if(username.isEmpty() || username.length() > 15)
                 System.out.println("\nYour username must contain between 1 and 15 characters.");
         } while(username.isEmpty() || username.length() > 15);
-
-        try {
-            out.write("USERNAME " + username + "\n"); // Send the new username to the server
-            out.flush();
-            System.out.println(in.readLine());
-            System.out.print("> ");
-        } catch (IOException e) {
-            try {
-                out.close();
-            } catch (IOException ex) {
-                System.out.println(CLIENT_ERROR + "There has been an issue while the writer");
-            }
-            System.out.println(CLIENT_ERROR + "The response to the server could not be sent");
-        }
     }
 }
